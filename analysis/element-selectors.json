@@ -1,0 +1,634 @@
+{
+  "title": {
+    "tagName": "H1",
+    "className": "kpih0e uvopNe",
+    "id": "",
+    "text": "Patrocinado",
+    "attributes": [
+      {
+        "name": "class",
+        "value": "kpih0e uvopNe"
+      },
+      {
+        "name": "aria-label",
+        "value": "Patrocinado"
+      },
+      {
+        "name": "style",
+        "value": ""
+      }
+    ]
+  },
+  "rating": {
+    "tagName": "SPAN",
+    "className": "ceNzKf",
+    "id": "",
+    "text": "",
+    "attributes": [
+      {
+        "name": "class",
+        "value": "ceNzKf"
+      },
+      {
+        "name": "role",
+        "value": "img"
+      },
+      {
+        "name": "aria-label",
+        "value": "4.4 estrellas "
+      }
+    ]
+  },
+  "address": {
+    "tagName": "BUTTON",
+    "className": "CsEnBe",
+    "id": "",
+    "text": "18 E 17th St, New York, NY 10003, Estados Unidos",
+    "attributes": [
+      {
+        "name": "class",
+        "value": "CsEnBe"
+      },
+      {
+        "name": "jsaction",
+        "value": "pane.wfvdle100;clickmod:pane.wfvdle100;focus:pane.focusTooltip;blur:pane.blurTooltip"
+      },
+      {
+        "name": "aria-label",
+        "value": "Dirección: 18 E 17th St, New York, NY 10003, Estados Unidos "
+      },
+      {
+        "name": "data-item-id",
+        "value": "address"
+      },
+      {
+        "name": "data-tooltip",
+        "value": "Copiar la dirección"
+      },
+      {
+        "name": "jslog",
+        "value": "36622; track:click; mutable:true;"
+      }
+    ]
+  },
+  "phone": null,
+  "website": null,
+  "infoSections": [
+    {
+      "tagName": "INPUT",
+      "className": "fontBodyMedium searchboxinput xiQnY ",
+      "id": "searchboxinput",
+      "text": "",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "fontBodyMedium searchboxinput xiQnY "
+        },
+        {
+          "name": "role",
+          "value": "combobox"
+        },
+        {
+          "name": "jslog",
+          "value": "11886"
+        },
+        {
+          "name": "aria-controls",
+          "value": "ydp1wd-haAclf"
+        },
+        {
+          "name": "aria-expanded",
+          "value": "false"
+        },
+        {
+          "name": "aria-haspopup",
+          "value": "grid"
+        },
+        {
+          "name": "autocomplete",
+          "value": "off"
+        },
+        {
+          "name": "id",
+          "value": "searchboxinput"
+        },
+        {
+          "name": "name",
+          "value": "q"
+        },
+        {
+          "name": "jsaction",
+          "value": "keyup:omnibox.keyUp; input:omnibox.inputDetected; keydown:omnibox.keyDown; focus:omnibox.focus; blur:omnibox.blur"
+        },
+        {
+          "name": "style",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "fontBodyMedium YkuOqf",
+      "id": "",
+      "text": "Ver fotos",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "fontBodyMedium YkuOqf"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "fontBodyMedium dmRWX",
+      "id": "",
+      "text": "4.4(5)",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "fontBodyMedium dmRWX"
+        },
+        {
+          "name": "style",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "fontBodyMedium",
+      "id": "",
+      "text": "Agencia de publicidad·",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "Io6YTe fontBodyMedium kR99db fdkmkc ",
+      "id": "",
+      "text": "18 E 17th St, New York, NY 10003, Estados Unidos",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Io6YTe fontBodyMedium kR99db fdkmkc "
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "OqCZI fontBodyMedium WVXvdc",
+      "id": "",
+      "text": "Abierto ⋅ Cierra a las 6 p.m. jueves9 a.m.–6 p.m.viernes9 a.m.–6 p.m.sábadoCerradodomingoCerrad",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "OqCZI fontBodyMedium WVXvdc"
+        },
+        {
+          "name": "jslog",
+          "value": "36914;metadata:WyIwYWhVS0V3aWg4WVBWMUx5TUF4VlBwcFVDSFRBWUFPNFE4QmNJQWlnQSJd"
+        }
+      ]
+    },
+    {
+      "tagName": "TABLE",
+      "className": "eK4R0e fontBodyMedium",
+      "id": "",
+      "text": "jueves9 a.m.–6 p.m.viernes9 a.m.–6 p.m.sábadoCerradodomingoCerradolunes9 a.m.–6 p.m.martes9 a.m",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "eK4R0e fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "Io6YTe fontBodyMedium kR99db fdkmkc ",
+      "id": "",
+      "text": "walrusnyc.com",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Io6YTe fontBodyMedium kR99db fdkmkc "
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "Io6YTe fontBodyMedium kR99db fdkmkc ",
+      "id": "",
+      "text": "+1 646-731-1700",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Io6YTe fontBodyMedium kR99db fdkmkc "
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "Io6YTe fontBodyMedium kR99db fdkmkc ",
+      "id": "",
+      "text": "P2P5+WF Nueva York, EE. UU.",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Io6YTe fontBodyMedium kR99db fdkmkc "
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "Io6YTe fontBodyMedium kR99db fdkmkc ",
+      "id": "",
+      "text": "Reclamar este negocio",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Io6YTe fontBodyMedium kR99db fdkmkc "
+        }
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "className": "LCTIRd fontBodyMedium keSVkf Fcu7Ue ",
+      "id": "",
+      "text": "",
+      "attributes": [
+        {
+          "name": "autocomplete",
+          "value": "off"
+        },
+        {
+          "name": "type",
+          "value": "text"
+        },
+        {
+          "name": "class",
+          "value": "LCTIRd fontBodyMedium keSVkf Fcu7Ue "
+        },
+        {
+          "name": "aria-labelledby",
+          "value": "placeholder.wfvdle119"
+        },
+        {
+          "name": "jsaction",
+          "value": "input:pane.wfvdle119.textEntry.input; keyup:pane.wfvdle119.textEntry.input; focus:pane.wfvdle119.textEntry.focus; blur:pane.wfvdle119.textEntry.blur"
+        },
+        {
+          "name": "style",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "tagName": "LABEL",
+      "className": "IM91Ib fontBodyMedium ",
+      "id": "placeholder.wfvdle119",
+      "text": "Pregunta a la comunidad",
+      "attributes": [
+        {
+          "name": "aria-hidden",
+          "value": "true"
+        },
+        {
+          "name": "class",
+          "value": "IM91Ib fontBodyMedium "
+        },
+        {
+          "name": "id",
+          "value": "placeholder.wfvdle119"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "zB7yGd Tc0rEd fontBodyMedium",
+      "id": "ucc-2",
+      "text": "Las opiniones se procesan automáticamente para detectar contenido inapropiado, como opiniones falsas",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "zB7yGd Tc0rEd fontBodyMedium"
+        },
+        {
+          "name": "id",
+          "value": "ucc-2"
+        }
+      ]
+    },
+    {
+      "tagName": "TD",
+      "className": "yxmtmf fontBodyMedium",
+      "id": "",
+      "text": "5",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "yxmtmf fontBodyMedium"
+        },
+        {
+          "name": "role",
+          "value": "presentation"
+        }
+      ]
+    },
+    {
+      "tagName": "TD",
+      "className": "yxmtmf fontBodyMedium",
+      "id": "",
+      "text": "4",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "yxmtmf fontBodyMedium"
+        },
+        {
+          "name": "role",
+          "value": "presentation"
+        }
+      ]
+    },
+    {
+      "tagName": "TD",
+      "className": "yxmtmf fontBodyMedium",
+      "id": "",
+      "text": "3",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "yxmtmf fontBodyMedium"
+        },
+        {
+          "name": "role",
+          "value": "presentation"
+        }
+      ]
+    },
+    {
+      "tagName": "TD",
+      "className": "yxmtmf fontBodyMedium",
+      "id": "",
+      "text": "2",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "yxmtmf fontBodyMedium"
+        },
+        {
+          "name": "role",
+          "value": "presentation"
+        }
+      ]
+    },
+    {
+      "tagName": "TD",
+      "className": "yxmtmf fontBodyMedium",
+      "id": "",
+      "text": "1",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "yxmtmf fontBodyMedium"
+        },
+        {
+          "name": "role",
+          "value": "presentation"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "i7mKJb fontBodyMedium ",
+      "id": "",
+      "text": "Opiniones Buscar opiniones",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "i7mKJb fontBodyMedium "
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "jftiEf fontBodyMedium ",
+      "id": "",
+      "text": "   Jose Chavez3 opinionesHace 4 años ¿La primera foto es real? Traducido por Google ・ Ver orig",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "jftiEf fontBodyMedium "
+        },
+        {
+          "name": "aria-label",
+          "value": "Jose Chavez"
+        },
+        {
+          "name": "data-review-id",
+          "value": "ChdDSUhNMG9nS0VJQ0FnSUNDaGJEU2tRRRAB"
+        },
+        {
+          "name": "jslog",
+          "value": "21866;;metadata:WyIwYWhVS0V3ak1ncG5WMUx5TUF4VVFDeDRBSFVsSUpCa1EwcE1GQ0FJb0FBIl0="
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "jftiEf fontBodyMedium ",
+      "id": "",
+      "text": "   Roubou McaHace 9 meses",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "jftiEf fontBodyMedium "
+        },
+        {
+          "name": "aria-label",
+          "value": "Roubou Mca"
+        },
+        {
+          "name": "data-review-id",
+          "value": "ChZDSUhNMG9nS0VJQ0FnSUR6c3RIcFhnEAE"
+        },
+        {
+          "name": "jslog",
+          "value": "21866;;metadata:WyIwYWhVS0V3ak1ncG5WMUx5TUF4VVFDeDRBSFVsSUpCa1EwcE1GQ0FVb0FRIl0="
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "jftiEf fontBodyMedium ",
+      "id": "",
+      "text": "   George Smythe2 opinionesHace 10 meses",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "jftiEf fontBodyMedium "
+        },
+        {
+          "name": "aria-label",
+          "value": "George Smythe"
+        },
+        {
+          "name": "data-review-id",
+          "value": "ChZDSUhNMG9nS0VJQ0FnSURUOXI2NFdBEAE"
+        },
+        {
+          "name": "jslog",
+          "value": "21866;;metadata:WyIwYWhVS0V3ak1ncG5WMUx5TUF4VVFDeDRBSFVsSUpCa1EwcE1GQ0Fnb0FnIl0="
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "HJCejf fontBodyMedium LCTIRd",
+      "id": "",
+      "text": "Vertoz Inc1.0(1)Agencia de publicidad",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "HJCejf fontBodyMedium LCTIRd"
+        }
+      ]
+    },
+    {
+      "tagName": "SPAN",
+      "className": "Q5g20 e4rVHe fontBodyMedium",
+      "id": "",
+      "text": "1.0(1)",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Q5g20 e4rVHe fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "HJCejf fontBodyMedium LCTIRd",
+      "id": "",
+      "text": "Powerphyl Media SolutionsNo hay opinionesAgencia de publicidad",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "HJCejf fontBodyMedium LCTIRd"
+        }
+      ]
+    },
+    {
+      "tagName": "SPAN",
+      "className": "Q5g20 e4rVHe fontBodyMedium",
+      "id": "",
+      "text": "No hay opiniones",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Q5g20 e4rVHe fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "HJCejf fontBodyMedium LCTIRd",
+      "id": "",
+      "text": "Verisimilitude MediaNo hay opinionesAgencia de publicidad",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "HJCejf fontBodyMedium LCTIRd"
+        }
+      ]
+    },
+    {
+      "tagName": "SPAN",
+      "className": "Q5g20 e4rVHe fontBodyMedium",
+      "id": "",
+      "text": "No hay opiniones",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Q5g20 e4rVHe fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "HJCejf fontBodyMedium LCTIRd",
+      "id": "",
+      "text": "Valux Digital5.0(2)Agencia de marketing",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "HJCejf fontBodyMedium LCTIRd"
+        }
+      ]
+    },
+    {
+      "tagName": "SPAN",
+      "className": "Q5g20 e4rVHe fontBodyMedium",
+      "id": "",
+      "text": "5.0(2)",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Q5g20 e4rVHe fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "DIV",
+      "className": "HJCejf fontBodyMedium LCTIRd",
+      "id": "",
+      "text": "Love & War5.0(1)Agencia de publicidad",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "HJCejf fontBodyMedium LCTIRd"
+        }
+      ]
+    },
+    {
+      "tagName": "SPAN",
+      "className": "Q5g20 e4rVHe fontBodyMedium",
+      "id": "",
+      "text": "5.0(1)",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "Q5g20 e4rVHe fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "LABEL",
+      "className": "GKsdTb fontBodyMedium",
+      "id": "",
+      "text": "Vista con el globo terráqueo",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "GKsdTb fontBodyMedium"
+        }
+      ]
+    },
+    {
+      "tagName": "LABEL",
+      "className": "GKsdTb fontBodyMedium",
+      "id": "",
+      "text": "Etiquetas",
+      "attributes": [
+        {
+          "name": "class",
+          "value": "GKsdTb fontBodyMedium"
+        }
+      ]
+    }
+  ]
+}
