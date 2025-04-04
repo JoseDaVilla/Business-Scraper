@@ -192,8 +192,8 @@ class GoogleMapsScraper {
     const businessUrls = [];
     let previousResultsCount = 0;
     let scrollAttempts = 0;
-    const maxScrollAttempts = 200; // Increased for more thorough scrolling
-    const maxConsecutiveFailedAttempts = 15; // Increased for more resilience
+    const maxScrollAttempts = 200; // Keep high number of attempts
+    const maxConsecutiveFailedAttempts = 15; // Keep current limit
     let consecutiveFailedAttempts = 0;
     
     debug.info(`Gathering business URLs (max: ${this.maxResults})...`);
@@ -202,6 +202,9 @@ class GoogleMapsScraper {
       // Initial wait for page to stabilize
       await this.randomDelay(2000, 4000);
       
+      // Generate a unique ID for this extraction run for the debug screenshots
+      const runId = new Date().toISOString().replace(/[:.]/g, '-');
+      
       // Keep scrolling and collecting results until we reach limits
       while (scrollAttempts < maxScrollAttempts && 
              businessUrls.length < this.maxResults &&
@@ -209,68 +212,55 @@ class GoogleMapsScraper {
         
         // Take occasional screenshots to track scrolling progress
         if (scrollAttempts % 20 === 0) {
-          const scrollScreenshot = path.join(this.debugDir, `scroll-attempt-${scrollAttempts}.png`);
+          const scrollScreenshot = path.join(this.debugDir, `scroll-attempt-${runId}-${scrollAttempts}.png`);
           await this.page.screenshot({ path: scrollScreenshot, fullPage: true });
         }
         
-        // Try multiple selectors for business elements
-        const businessElements = await this.page.evaluate(() => {
-          // Combined selectors approach - try every possible business element selector
-          const selectors = [
-            'div.Nv2PK', 
-            '.xvfwg', 
-            '[data-result-index]',
-            'div.bfdHYd',
-            'a.hfpxzc',
-            'div.MjjYud',
-            'div.Nv2PK, a.hfpxzc', // Combined selector
-            'div[jsaction*="mouseover:pane"] a',
-            'div[jsaction*="pane.placeResult"] a',
-            'a[href*="maps/place"]',
-            'div[role="feed"] > div' // Generic feed item
-          ];
+        // Use a more direct and comprehensive approach to find business elements and URLs
+        const extractedUrls = await this.page.evaluate(() => {
+          // First approach: Find all link elements that point to Maps place pages
+          const allLinks = Array.from(document.querySelectorAll('a[href*="/maps/place/"]'));
           
-          // Try each selector and return all matches
-          let allElements = [];
-          for (const selector of selectors) {
-            const elements = Array.from(document.querySelectorAll(selector));
-            if (elements.length > 0) {
-              allElements = allElements.concat(elements);
-            }
-          }
+          // Make sure we're getting unique elements (not duplicated in the DOM)
+          const uniqueLinks = [...new Set(allLinks)];
           
-          // Get unique elements (may have duplicates from different selectors)
-          const uniqueElements = [...new Set(allElements)];
-          
-          // Extract URLs from elements
-          return uniqueElements
-            .filter(element => {
-              // Filter elements that look like business listings
-              return element.tagName === 'A' || element.querySelector('a[href*="maps/place"]');
+          // Get full URLs from valid links
+          return uniqueLinks
+            .map(link => {
+              const href = link.href;
+              // Only include actual place links, not directions or other types
+              if (href && href.includes('/maps/place/') && !href.includes('/dir/')) {
+                return href;
+              }
+              return null;
             })
-            .map(element => {
-              // Get the href attribute from the element or its child
-              const link = element.tagName === 'A' ? element : element.querySelector('a[href*="maps/place"]');
-              return link ? link.href : null;
-            })
-            .filter(url => url && url.includes('/maps/place/'));
+            .filter(Boolean);
         });
         
-        // Log the progress
-        debug.info(`Found ${businessElements.length} business elements, gathered ${businessUrls.length} URLs so far (attempt ${scrollAttempts})`);
+        // For debugging, get count of ALL business elements in different ways
+        const elementCounts = await this.page.evaluate(() => {
+          return {
+            mapsPlaceLinks: document.querySelectorAll('a[href*="/maps/place/"]').length,
+            nv2pkDivs: document.querySelectorAll('div.Nv2PK').length,
+            feedItems: document.querySelectorAll('div[role="feed"] > div').length,
+            allDivsWithData: document.querySelectorAll('div[data-result-index]').length
+          };
+        });
+        
+        debug.info(`Found ${JSON.stringify(elementCounts)} elements, extracted ${extractedUrls.length} URLs`);
         
         // Process new findings
-        if (businessElements.length > previousResultsCount) {
+        if (extractedUrls.length > previousResultsCount) {
           // Reset consecutive failures when we find new results
           consecutiveFailedAttempts = 0;
           
           // Update the count for next comparison
-          previousResultsCount = businessElements.length;
+          previousResultsCount = extractedUrls.length;
           
           // Add new business URLs to our collection, avoiding duplicates
           const existingUrls = new Set(businessUrls);
           
-          for (const url of businessElements) {
+          for (const url of extractedUrls) {
             if (!existingUrls.has(url) && businessUrls.length < this.maxResults) {
               businessUrls.push(url);
               existingUrls.add(url);
@@ -293,15 +283,30 @@ class GoogleMapsScraper {
         // Increment scroll attempt counter
         scrollAttempts++;
         
-        // Perform a scroll action with randomized behavior
-        await this.performEnhancedScrolling();
+        // Try a more aggressive scrolling approach when no new results for a while
+        if (consecutiveFailedAttempts > 5) {
+          await this.performAggressiveScrolling();
+        } else {
+          await this.performEnhancedScrolling();
+        }
         
         // Wait between scrolls - variable timeout
-        const scrollWaitTime = Math.floor(2000 + (Math.random() * 3000));
+        const scrollWaitTime = Math.floor(1500 + (Math.random() * 1000));
         await this.page.waitForTimeout(scrollWaitTime);
       }
       
       debug.info(`Finished gathering URLs. Found ${businessUrls.length} businesses`);
+      
+      // Take a final screenshot if we didn't get enough results
+      if (businessUrls.length < this.maxResults) {
+        const finalScreenshot = path.join(this.debugDir, `final-scroll-${runId}.png`);
+        await this.page.screenshot({ path: finalScreenshot, fullPage: true });
+        debug.info(`Final screenshot saved to ${finalScreenshot}`);
+        
+        // Save the HTML to analyze why we're not getting more results
+        const html = await this.page.content();
+        fs.writeFileSync(path.join(this.debugDir, `final-html-${runId}.html`), html);
+      }
       
       // Return unique URLs
       return [...new Set(businessUrls)].slice(0, this.maxResults);
@@ -310,7 +315,7 @@ class GoogleMapsScraper {
       return [...new Set(businessUrls)].slice(0, this.maxResults);
     }
   }
-
+  
   // Enhanced scrolling technique with randomization
   async performEnhancedScrolling() {
     try {
@@ -419,6 +424,57 @@ class GoogleMapsScraper {
     }
   }
   
+  // Add a more aggressive scrolling technique when standard scrolling stops yielding results
+  async performAggressiveScrolling() {
+    try {
+      debug.info("Performing aggressive scrolling");
+      
+      await this.page.evaluate(async () => {
+        const feed = document.querySelector('div[role="feed"], .VkpGBb, .section-scrollbox');
+        if (!feed) return;
+        
+        // Try multiple approaches to trigger more content loading
+        
+        // 1. Scroll to bottom with force
+        feed.scrollTop = feed.scrollHeight + 1000;
+        
+        // 2. Look for any "Show more results" buttons and click them
+        const showMoreButtons = Array.from(document.querySelectorAll('button')).filter(
+          button => button.innerText.toLowerCase().includes('more') ||
+                   button.innerText.toLowerCase().includes('show') ||
+                   button.getAttribute('aria-label')?.toLowerCase().includes('more')
+        );
+        
+        if (showMoreButtons.length > 0) {
+          showMoreButtons[0].click();
+          await new Promise(r => setTimeout(r, 500));
+        }
+        
+        // 3. Try to trigger lazy loading by rapid scrolling
+        const scrollHeight = feed.scrollHeight;
+        const scrollPositions = [
+          scrollHeight * 0.8,
+          scrollHeight * 0.9,
+          scrollHeight,
+          scrollHeight * 0.5, // Jump back to middle
+          scrollHeight * 0.95,
+          scrollHeight // Back to bottom
+        ];
+        
+        for (const pos of scrollPositions) {
+          feed.scrollTop = pos;
+          await new Promise(r => setTimeout(r, 250));
+        }
+      });
+      
+      // Wait a bit longer after aggressive scrolling
+      await this.page.waitForTimeout(2000);
+      
+    } catch (error) {
+      debug.error('Error during aggressive scrolling:', error);
+    }
+  }
+
   // Helper: Try multiple selectors until one works
   async tryMultipleSelectors(selectors, action, timeout = 5000) {
     for (const selector of selectors) {

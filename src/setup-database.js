@@ -42,7 +42,7 @@ async function setupDatabase() {
         email TEXT,
         address TEXT,
         city TEXT,
-        country TEXT,
+        country TEXT,   
         website TEXT,
         domain TEXT,
         rating REAL,
@@ -53,25 +53,37 @@ async function setupDatabase() {
       )
     `);
     
-    // Add unique constraint if it doesn't exist
+    // Try to remove any existing constraint first to avoid conflicts
     try {
       await pool.query(`
         ALTER TABLE businesses 
-        ADD CONSTRAINT unique_domain_search 
-        UNIQUE(domain, search_term)
+        DROP CONSTRAINT IF EXISTS unique_domain_search
       `);
-      console.log('Added unique constraint on domain and search_term');
+      console.log('Removed existing domain constraint (if any)');
+      
+      // Remove any existing index
+      await pool.query(`
+        DROP INDEX IF EXISTS idx_unique_domain_search
+      `);
+      
+      // Now add a unique index instead of constraint
+      await pool.query(`
+        CREATE UNIQUE INDEX idx_unique_domain_search
+        ON businesses (domain, search_term)
+        WHERE domain IS NOT NULL AND domain != '' AND domain NOT LIKE 'no-domain-%' AND domain NOT LIKE 'backup-domain-%'
+      `);
+      console.log('Added unique index on domain and search_term');
     } catch (error) {
-      // Constraint might already exist
-      console.log('Note: Unique constraint may already exist');
+      console.log('Note: Issue with index management', error.message);
     }
     
     // Create index on domain column if it doesn't exist
     try {
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_businesses_domain ON businesses(domain)
+        WHERE domain IS NOT NULL AND domain != ''
       `);
-      console.log('Created index on domain column');
+      console.log('Created conditional index on domain column');
     } catch (error) {
       // Index might already exist
       console.log('Note: Domain index may already exist');

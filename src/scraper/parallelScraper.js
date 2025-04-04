@@ -81,9 +81,53 @@ class ParallelScraper {
       // Close main scraper browser to free resources
       await mainScraper.close();
       
-      // If no businesses found, exit early with a more detailed error
+      // If no businesses found, try with a slightly modified search term
+      if (businessList.length === 0) {
+        console.log(`No businesses found for "${searchTerm}", trying alternatives...`);
+        
+        // Try with just the city name if it contains multiple parts
+        const cityMatch = searchTerm.match(/- ([^-]+) -/);
+        if (cityMatch && cityMatch[1].includes(' ')) {
+          const cityParts = cityMatch[1].trim().split(' ');
+          const simplifiedCity = cityParts[0]; // Just first part of the city name
+          const stateMatch = searchTerm.match(/- ([^-]+)$/);
+          const state = stateMatch ? stateMatch[1].trim() : '';
+          
+          const alternateSearchTerm = `${searchTerm.split('-')[0].trim()} - ${simplifiedCity} - ${state}`;
+          console.log(`Trying alternate search term: "${alternateSearchTerm}"`);
+          
+          // Initialize a new scraper with the simplified search term
+          const alternateScraper = new GoogleMapsScraper(this.maxResultsPerSearch);
+          await alternateScraper.initialize();
+          
+          const alternateList = await alternateScraper.getBusinessList(alternateSearchTerm);
+          console.log(`Found ${alternateList.length} businesses using alternate search term`);
+          
+          // Save the alternate results for inspection
+          fs.writeFileSync(
+            path.join(debugDir, `alternate-urls-${taskId}.json`), 
+            JSON.stringify(alternateList, null, 2)
+          );
+          
+          await alternateScraper.close();
+          
+          // If the alternate search found results, use those instead
+          if (alternateList.length > 0) {
+            console.log(`Using ${alternateList.length} businesses from alternate search`);
+            businessList.push(...alternateList);
+          }
+        }
+      }
+      
+      // If still no businesses found, exit early with a more detailed error
       if (businessList.length === 0) {
         console.error(`No businesses found for search term: ${searchTerm}`);
+        // Take a screenshot of what's on the page for debugging
+        await mainScraper.page?.screenshot({ 
+          path: path.join(debugDir, `no-results-${taskId}.png`),
+          fullPage: true 
+        }).catch(e => console.error("Failed to take screenshot:", e));
+        
         await this.updateTaskStatus(taskId, 'completed', 0);
         return [];
       }
@@ -172,8 +216,10 @@ class ParallelScraper {
       // Filter out empty results and save to database
       const validResults = batchResults.filter(b => b && b.name);
       for (const business of validResults) {
-        await this.saveBusinessToDB(business);
-        results.push(business);
+        const id = await this.saveBusinessToDB(business);
+        if (id) {
+          results.push(business);
+        }
       }
       
       // Report progress
@@ -259,44 +305,95 @@ class ParallelScraper {
   
   async saveBusinessToDB(businessData) {
     try {
-      // Check if we have a domain to use for duplicate prevention
-      if (businessData.website && !businessData.domain) {
-        try {
-          businessData.domain = new URL(businessData.website).hostname;
-        } catch {
-          // If URL parsing fails, leave domain empty
-          businessData.domain = '';
-        }
+      // Generate a random ID to use if domain is missing
+      const randomId = Math.random().toString(36).substring(2, 15);
+      
+      // Set domain to a unique string if website is missing to avoid constraint conflicts
+      if (!businessData.website || !businessData.domain) {
+        businessData.domain = `no-domain-${randomId}`;
       }
       
-      // Use ON CONFLICT DO NOTHING to avoid duplicates based on domain + search term
+      // Make sure data is properly formatted for database insertion
+      const formattedData = {
+        name: businessData.name || 'Unnamed Business',
+        email: businessData.email || null,
+        address: businessData.address || null,
+        city: businessData.city || null,
+        country: businessData.country || null,
+        website: businessData.website || null,
+        domain: businessData.domain || `no-domain-${randomId}`,
+        rating: businessData.rating || null,
+        phone: businessData.phone || null,
+        owner_name: businessData.owner_name || null,
+        search_term: businessData.search_term || null
+      };
+      
+      // Log the business being saved
+      console.log(`Saving business: "${formattedData.name}" with domain: ${formattedData.domain}`);
+      
+      // Use simplified INSERT without ON CONFLICT handling to ensure data is always inserted
       const query = `
         INSERT INTO businesses (name, email, address, city, country, website, domain, rating, phone, owner_name, search_term)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        ON CONFLICT (domain, search_term) DO NOTHING
         RETURNING id
       `;
       
-      const result = await db.insert(query, [
-        businessData.name,
-        businessData.email || null, // Use null instead of empty string
-        businessData.address,
-        businessData.city,
-        businessData.country,
-        businessData.website,
-        businessData.domain || '', // New domain field
-        businessData.rating,
-        businessData.phone,
-        businessData.owner_name,
-        businessData.search_term
+      const result = await db.query(query, [
+        formattedData.name,
+        formattedData.email,
+        formattedData.address,
+        formattedData.city,
+        formattedData.country,
+        formattedData.website,
+        formattedData.domain,
+        formattedData.rating,
+        formattedData.phone,
+        formattedData.owner_name,
+        formattedData.search_term
       ]);
       
-      return result?.id;
+      // Extract the returned ID from the result
+      const id = result.rows && result.rows[0] ? result.rows[0].id : null;
+      console.log(`Successfully saved business "${formattedData.name}" with ID: ${id || 'unknown'}`);
+      return id;
     } catch (error) {
-      console.error('Error saving to database:', error);
+      console.error('Error saving business to database:', error);
+      console.error('Business data that failed:', JSON.stringify(businessData, null, 2));
+      
+      // Try alternative insertion without domain constraint
+      try {
+        const backupQuery = `
+          INSERT INTO businesses (name, email, address, city, country, website, domain, rating, phone, owner_name, search_term)
+          SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+          WHERE NOT EXISTS (
+            SELECT 1 FROM businesses 
+            WHERE name = $1 AND search_term = $11
+          )
+        `;
+        
+        await db.query(backupQuery, [
+          businessData.name || 'Unnamed Business',
+          businessData.email || null, 
+          businessData.address || null,
+          businessData.city || null,
+          businessData.country || null,
+          businessData.website || null,
+          `backup-domain-${Math.random().toString(36).substring(2, 10)}`,
+          businessData.rating || null,
+          businessData.phone || null,
+          businessData.owner_name || null,
+          businessData.search_term || null
+        ]);
+        
+        console.log(`Saved business "${businessData.name}" using backup method`);
+        return true;
+      } catch (backupError) {
+        console.error('Backup insertion also failed:', backupError);
+        return false;
+      }
     }
   }
-  
+
   // Helper function to chunk an array into n pieces
   chunkArray(array, chunks) {
     const result = [];
