@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "setup-db": "node src/setup-database.js"
+    "setup-db": "node src/setup-database.js",
+    "test-scraper": "node src/tools/fix-batch.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -274,6 +274,54 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// Add a batch debug endpoint
+app.get('/api/batch/debug', async (req, res) => {
+  try {
+    // Get a list of all debug screenshots
+    const fs = require('fs');
+    const path = require('path');
+    const debugDir = path.join(__dirname, '../debug');
+    
+    if (!fs.existsSync(debugDir)) {
+      return res.json({ 
+        message: 'No debug files found',
+        debugDirExists: false
+      });
+    }
+    
+    const files = fs.readdirSync(debugDir)
+      .filter(file => file.endsWith('.png') || file.endsWith('.json') || file.endsWith('.html'))
+      .sort((a, b) => {
+        const statA = fs.statSync(path.join(debugDir, a));
+        const statB = fs.statSync(path.join(debugDir, b));
+        return statB.mtime.getTime() - statA.mtime.getTime(); // Sort newest first
+      });
+    
+    // Get last batch run info
+    const lastBatchInfo = await db.getOne(
+      'SELECT * FROM batch_operations ORDER BY start_time DESC LIMIT 1'
+    );
+    
+    // Get the most recent task info
+    const lastTask = await db.getOne(
+      'SELECT * FROM scraping_tasks ORDER BY created_at DESC LIMIT 1'
+    );
+    
+    res.json({
+      debugDirExists: true,
+      files: files.map(file => `/debug/${file}`),
+      lastBatch: lastBatchInfo,
+      lastTask: lastTask
+    });
+  } catch (error) {
+    console.error('Error getting debug information:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add route to serve debug files
+app.use('/debug', express.static(path.join(__dirname, '../debug')));
+
 // Improved server start function with port fallback
 function startServer(port) {
   const server = app.listen(port)

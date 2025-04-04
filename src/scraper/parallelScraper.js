@@ -62,14 +62,28 @@ class ParallelScraper {
       await mainScraper.initialize();
       
       // Get just the list of business elements (URLs, not full details)
+      console.log(`Getting business list for search term: ${searchTerm}`);
       const businessList = await mainScraper.getBusinessList(searchTerm);
       console.log(`Found ${businessList.length} businesses to scrape details`);
+      
+      // Save the businesses URLs to a debug file for inspection
+      const fs = require('fs');
+      const path = require('path');
+      const debugDir = path.join(__dirname, '../../debug');
+      if (!fs.existsSync(debugDir)) {
+        fs.mkdirSync(debugDir, { recursive: true });
+      }
+      fs.writeFileSync(
+        path.join(debugDir, `business-urls-${taskId}.json`), 
+        JSON.stringify(businessList, null, 2)
+      );
       
       // Close main scraper browser to free resources
       await mainScraper.close();
       
-      // If no businesses found, exit early
+      // If no businesses found, exit early with a more detailed error
       if (businessList.length === 0) {
+        console.error(`No businesses found for search term: ${searchTerm}`);
         await this.updateTaskStatus(taskId, 'completed', 0);
         return [];
       }
@@ -137,6 +151,7 @@ class ParallelScraper {
       return businesses;
     } catch (error) {
       console.error(`Error in parallel scraping: ${error.message}`);
+      console.error(error.stack);
       await this.updateTaskStatus(taskId, 'failed');
       throw error;
     }
@@ -320,14 +335,28 @@ class ParallelScraper {
       });
   }
 
-  updateTaskStatus(taskId, status) {
-    const query = `
-      UPDATE scraping_tasks
-      SET status = $1, completed_at = NOW()
-      WHERE id = $2
-    `;
+  updateTaskStatus(taskId, status, businessesFound) {
+    // Don't update businesses_found if it's not provided (might be undefined)
+    let query;
+    let params;
     
-    db.query(query, [status, taskId])
+    if (businessesFound !== undefined) {
+      query = `
+        UPDATE scraping_tasks
+        SET status = $1, businesses_found = $3, completed_at = $4
+        WHERE id = $2
+      `;
+      params = [status, taskId, businessesFound, status === 'running' ? null : new Date()];
+    } else {
+      query = `
+        UPDATE scraping_tasks
+        SET status = $1, completed_at = $3
+        WHERE id = $2
+      `;
+      params = [status, taskId, status === 'running' ? null : new Date()];
+    }
+    
+    return db.query(query, params)
       .catch(err => console.error('Error updating task status:', err));
   }
 
