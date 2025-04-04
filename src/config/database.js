@@ -3,26 +3,33 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// PostgreSQL connection pool with explicit remote connection settings
+// PostgreSQL connection pool with explicit Render connection settings
 const pool = new Pool({
-  user: process.env.PGUSER || 'postgres',
-  host: process.env.PGHOST || '10.10.0.76', // Default to the remote server IP if not in .env
-  database: process.env.PGDATABASE || 'business_scraper',
-  password: process.env.PGPASSWORD || 'newpassword',
+  user: process.env.PGUSER || 'leads_db_rc6a_user',
+  host: process.env.PGHOST || 'dpg-cvo56ap5pdvs739nroe0-a.oregon-postgres.render.com',
+  database: process.env.PGDATABASE || 'leads_db_rc6a',
+  password: process.env.PGPASSWORD || '4kzEQqPy5bLBpA1pNiQVGA7VT5KeOcgT',
   port: process.env.PGPORT || 5432,
   // Add connection timeout settings for more reliable remote connections
   connectionTimeoutMillis: 10000, // 10 seconds
   idle_in_transaction_session_timeout: 30000, // 30 seconds
+  // Add SSL settings for cloud hosted PostgreSQL if needed
+  ssl: {
+    rejectUnauthorized: false // This may be needed for some cloud providers
+  }
 });
 
 // Test database connection with improved error handling for remote connections
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Database connection error:', err.message);
-    console.error(`Failed to connect to PostgreSQL at ${process.env.PGHOST || '10.10.0.76'}:${process.env.PGPORT || 5432}`);
-    console.error('Please check network connectivity and PostgreSQL server settings.');
+    console.error(`Failed to connect to PostgreSQL at ${process.env.PGHOST || 'dpg-cvo56ap5pdvs739nroe0-a'}:${process.env.PGPORT || 5432}`);
+    console.error('Please check:');
+    console.error('1. PostgreSQL is running on the remote host');
+    console.error('2. Connection credentials are correct');
+    console.error('3. Network connectivity between client and database server');
   } else {
-    console.log(`Connected to PostgreSQL database at ${process.env.PGHOST || '10.10.0.76'}:${process.env.PGPORT || 5432}`);
+    console.log(`Connected to PostgreSQL database at ${process.env.PGHOST || 'dpg-cvo56ap5pdvs739nroe0-a'}:${process.env.PGPORT || 5432}`);
     initializeTables();
   }
 });
