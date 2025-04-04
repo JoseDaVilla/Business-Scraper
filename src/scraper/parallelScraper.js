@@ -213,8 +213,19 @@ class ParallelScraper {
       // Wait for the batch to complete
       const batchResults = await Promise.all(batchPromises);
       
-      // Filter out empty results and save to database
-      const validResults = batchResults.filter(b => b && b.name);
+      // Filter out empty results and businesses without domains/websites
+      const validResults = batchResults.filter(b => {
+        if (!b || !b.name) return false;
+        
+        // Skip businesses without websites or domains
+        if ((!b.website || b.website === '') && (!b.domain || b.domain === '')) {
+          console.log(`Skipping business "${b.name}" - no website or domain found`);
+          return false;
+        }
+        
+        return true;
+      });
+      
       for (const business of validResults) {
         const id = await this.saveBusinessToDB(business);
         if (id) {
@@ -223,7 +234,9 @@ class ParallelScraper {
       }
       
       // Report progress
-      if (onProgress) onProgress(validResults.length);
+      if (onProgress) {
+        onProgress(validResults.length);
+      }
     }
     
     return results;
@@ -305,15 +318,24 @@ class ParallelScraper {
   
   async saveBusinessToDB(businessData) {
     try {
-      // Generate a random ID to use if domain is missing
-      const randomId = Math.random().toString(36).substring(2, 15);
-      
-      // Set domain to a unique string if website is missing to avoid constraint conflicts
-      if (!businessData.website || !businessData.domain) {
-        businessData.domain = `no-domain-${randomId}`;
+      // Don't save businesses without websites or domains
+      if ((!businessData.website || businessData.website === '') && 
+          (!businessData.domain || businessData.domain === '')) {
+        console.log(`Not saving "${businessData.name}" - no website or domain`);
+        return false;
       }
       
-      // Make sure data is properly formatted for database insertion
+      // Generate a domain from the website if available
+      if (businessData.website && !businessData.domain) {
+        try {
+          businessData.domain = new URL(businessData.website).hostname;
+        } catch (e) {
+          // If URL parsing fails, use website as domain
+          businessData.domain = businessData.website;
+        }
+      }
+      
+      // Format data for insertion
       const formattedData = {
         name: businessData.name || 'Unnamed Business',
         email: businessData.email || null,
@@ -321,7 +343,7 @@ class ParallelScraper {
         city: businessData.city || null,
         country: businessData.country || null,
         website: businessData.website || null,
-        domain: businessData.domain || `no-domain-${randomId}`,
+        domain: businessData.domain || null, // No more placeholder domains
         rating: businessData.rating || null,
         phone: businessData.phone || null,
         owner_name: businessData.owner_name || null,
@@ -357,18 +379,21 @@ class ParallelScraper {
       console.log(`Successfully saved business "${formattedData.name}" with ID: ${id || 'unknown'}`);
       return id;
     } catch (error) {
-      console.error('Error saving business to database:', error);
+      console.error('Error saving business to database:', error.message);
       console.error('Business data that failed:', JSON.stringify(businessData, null, 2));
       
       // Try alternative insertion without domain constraint
       try {
+        // Skip businesses without domains even in the backup method
+        if ((!businessData.website || businessData.website === '') && 
+            (!businessData.domain || businessData.domain === '')) {
+          return false;
+        }
+        
+        // Use a simpler query without returning id and without complex conditions
         const backupQuery = `
           INSERT INTO businesses (name, email, address, city, country, website, domain, rating, phone, owner_name, search_term)
-          SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-          WHERE NOT EXISTS (
-            SELECT 1 FROM businesses 
-            WHERE name = $1 AND search_term = $11
-          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         `;
         
         await db.query(backupQuery, [
@@ -378,7 +403,7 @@ class ParallelScraper {
           businessData.city || null,
           businessData.country || null,
           businessData.website || null,
-          `backup-domain-${Math.random().toString(36).substring(2, 10)}`,
+          businessData.domain || null, // No more placeholder values
           businessData.rating || null,
           businessData.phone || null,
           businessData.owner_name || null,
@@ -388,7 +413,7 @@ class ParallelScraper {
         console.log(`Saved business "${businessData.name}" using backup method`);
         return true;
       } catch (backupError) {
-        console.error('Backup insertion also failed:', backupError);
+        console.error('Backup insertion also failed:', backupError.message);
         return false;
       }
     }

@@ -124,12 +124,21 @@ class BusinessDetailScraper {
         domain = this.extractDomain(website) || '';
       }
       
+      // Skip businesses without a website unless they have a phone
+      if (!website && !phone) {
+        debug.info(`Skipping business "${name}" - no website or phone found`);
+        return null;
+      }
+      
       // No need to wait for email extraction now - we'll do it in a separate process
       // Parse city and country
       const { city, country } = this.parseCityCountry(address, searchTerm);
       
-      return {
-        name,
+      // Always create name if missing
+      const finalName = name || this.extractNameFromUrl(businessUrl) || 'Unknown Business';
+      
+      const businessData = {
+        name: finalName,
         email: '', // Start with empty email, will be filled by EmailFinder
         address,
         city,
@@ -141,20 +150,30 @@ class BusinessDetailScraper {
         owner_name: '',
         search_term: searchTerm
       };
+      
+      debug.info(`Successfully extracted business details for: ${finalName}`);
+      return businessData;
     } catch (error) {
       debug.error(`Error extracting business details: ${error.message}`);
-      return {
-        name: this.extractNameFromUrl(businessUrl),
-        email: '',
-        address: '',
-        city: '',
-        country: '',
-        website: '',
-        rating: null,
-        phone: '',
-        owner_name: '',
-        search_term: searchTerm
-      };
+      
+      // Return a minimal business object with data from URL if possible
+      const backupName = this.extractNameFromUrl(businessUrl);
+      if (backupName) {
+        return {
+          name: backupName,
+          email: '',
+          address: '',
+          city: '',
+          country: '',
+          website: '',
+          domain: '',
+          rating: null,
+          phone: '',
+          owner_name: '',
+          search_term: searchTerm
+        };
+      }
+      return null;
     }
   }
   

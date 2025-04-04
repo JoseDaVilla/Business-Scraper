@@ -154,24 +154,50 @@ async function initializeTables() {
 
 // Helper functions for database operations
 const db = {
-  query: (text, params) => pool.query(text, params),
+  query: (text, params) => {
+    console.log(`Executing SQL: ${text} with params:`, params);
+    return pool.query(text, params)
+      .then(result => {
+        console.log(`Query returned ${result.rowCount} rows`);
+        return result;
+      })
+      .catch(err => {
+        console.error('Database query error:', err);
+        throw err;
+      });
+  },
   
   // Get a single row
   getOne: async (text, params) => {
-    const result = await pool.query(text, params);
-    return result.rows[0];
+    try {
+      const result = await pool.query(text, params);
+      return result.rows[0];
+    } catch (err) {
+      console.error('Database getOne error:', err);
+      throw err;
+    }
   },
   
   // Get multiple rows
   getMany: async (text, params) => {
-    const result = await pool.query(text, params);
-    return result.rows;
+    try {
+      const result = await pool.query(text, params);
+      return result.rows;
+    } catch (err) {
+      console.error('Database getMany error:', err);
+      throw err;
+    }
   },
   
   // Insert and return the inserted row
   insert: async (text, params) => {
-    const result = await pool.query(text, params);
-    return result.rows[0];
+    try {
+      const result = await pool.query(text, params);
+      return result.rows[0];
+    } catch (err) {
+      console.error('Database insert error:', err);
+      throw err;
+    }
   }
 };
 

@@ -192,8 +192,8 @@ class GoogleMapsScraper {
     const businessUrls = [];
     let previousResultsCount = 0;
     let scrollAttempts = 0;
-    const maxScrollAttempts = 200; // Keep high number of attempts
-    const maxConsecutiveFailedAttempts = 15; // Keep current limit
+    const maxScrollAttempts = 200; // Increased for more thorough scrolling
+    const maxConsecutiveFailedAttempts = 5; // Changed from 15 to 5 as requested
     let consecutiveFailedAttempts = 0;
     
     debug.info(`Gathering business URLs (max: ${this.maxResults})...`);
