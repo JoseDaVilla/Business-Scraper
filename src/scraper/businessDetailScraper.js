@@ -104,9 +104,6 @@ class BusinessDetailScraper {
       await this.page.waitForSelector('div[role="region"], div.m6QErb, button[data-item-id]', { timeout: 10000 })
         .catch(() => debug.warn('Business info panel not found'));
       
-      // Take screenshot for debugging
-      await this.page.screenshot({ path: `debug-business-${Date.now()}.png` });
-      
       // Extract all business details
       const name = await this.extractName();
       debug.info(`Extracting details for: ${name}`);

@@ -3,21 +3,26 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// PostgreSQL connection pool
+// PostgreSQL connection pool with explicit remote connection settings
 const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
-  host: process.env.PGHOST || 'localhost',
+  host: process.env.PGHOST || '10.10.0.76', // Default to the remote server IP if not in .env
   database: process.env.PGDATABASE || 'business_scraper',
   password: process.env.PGPASSWORD || 'newpassword',
   port: process.env.PGPORT || 5432,
+  // Add connection timeout settings for more reliable remote connections
+  connectionTimeoutMillis: 10000, // 10 seconds
+  idle_in_transaction_session_timeout: 30000, // 30 seconds
 });
 
-// Test database connection
+// Test database connection with improved error handling for remote connections
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Database connection error:', err.message);
+    console.error(`Failed to connect to PostgreSQL at ${process.env.PGHOST || '10.10.0.76'}:${process.env.PGPORT || 5432}`);
+    console.error('Please check network connectivity and PostgreSQL server settings.');
   } else {
-    console.log('Connected to PostgreSQL database');
+    console.log(`Connected to PostgreSQL database at ${process.env.PGHOST || '10.10.0.76'}:${process.env.PGPORT || 5432}`);
     initializeTables();
   }
 });

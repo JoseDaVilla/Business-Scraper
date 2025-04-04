@@ -116,33 +116,50 @@ class GoogleMapsScraper {
     const businessUrls = [];
     let previousResultsCount = 0;
     let scrollAttempts = 0;
-    const maxScrollAttempts = 50; // Increased for more thorough scrolling
+    const maxScrollAttempts = 200; // Significantly increased from 50 to ensure more thorough scrolling
+    const maxConsecutiveFailedAttempts = 10; // New parameter to track consecutive failures
+    let consecutiveFailedAttempts = 0;
     
     console.log(`Gathering business URLs (max: ${this.maxResults})...`);
     
     try {
+      // Initial wait for page to stabilize
+      await this.page.waitForTimeout(2000);
+      
       // Keep scrolling and collecting results until we stop finding new ones or hit the limit
       while (scrollAttempts < maxScrollAttempts && businessUrls.length < this.maxResults) {
-        // Find all business elements
-        const businessElements = await this.page.$$('div.Nv2PK');
-        console.log(`Found ${businessElements.length} business elements, gathered ${businessUrls.length} URLs so far`);
+        // Take a screenshot every 50 scrolls for debugging
+        if (scrollAttempts % 50 === 0) {
+          await this.page.screenshot({ path: `scroll-attempt-${scrollAttempts}.png` });
+        }
+        
+        // Find all business elements using multiple selectors for better coverage
+        const businessElements = await this.page.$$('div.Nv2PK, .xvfwg, [data-result-index]');
+        console.log(`Found ${businessElements.length} business elements, gathered ${businessUrls.length} URLs so far (attempt ${scrollAttempts})`);
         
         if (businessElements.length > previousResultsCount) {
+          // Reset consecutive failures when we find new results
+          consecutiveFailedAttempts = 0;
           previousResultsCount = businessElements.length;
-          scrollAttempts = 0; // Reset scroll attempts when we find new results
           
           // Extract URLs for the new elements
           for (let i = businessUrls.length; i < businessElements.length && businessUrls.length < this.maxResults; i++) {
             try {
               // Extract the URL without clicking (more efficient)
-              const href = await businessElements[i].$eval('a.hfpxzc', el => el.getAttribute('href'));
+              const href = await businessElements[i].$eval('a.hfpxzc, a[data-value], a[jsaction*="mouse"]', el => el.getAttribute('href'))
+                .catch(() => null);
+                
               if (href) {
                 // Clean the URL to remove problematic parameters
                 const cleanedHref = href.replace(/authuser=\d+&hl=[^&]+/, 'hl=en');
-                businessUrls.push(cleanedHref);
                 
-                if (businessUrls.length % 10 === 0) {
-                  console.log(`Gathered ${businessUrls.length} business URLs`);
+                // Only add if it's not already in the list
+                if (!businessUrls.includes(cleanedHref)) {
+                  businessUrls.push(cleanedHref);
+                  
+                  if (businessUrls.length % 10 === 0) {
+                    console.log(`Gathered ${businessUrls.length} business URLs`);
+                  }
                 }
               }
             } catch (error) {
@@ -157,17 +174,46 @@ class GoogleMapsScraper {
           }
         } else {
           scrollAttempts++;
-          console.log(`No new results found, scroll attempt ${scrollAttempts}/${maxScrollAttempts}`);
+          consecutiveFailedAttempts++;
+          console.log(`No new results found, scroll attempt ${scrollAttempts}/${maxScrollAttempts}, consecutive failures: ${consecutiveFailedAttempts}`);
+          
+          // If we've had too many consecutive failures, try clicking the "More results" button if it exists
+          if (consecutiveFailedAttempts >= maxConsecutiveFailedAttempts) {
+            try {
+              // Try clicking "More results" button if available
+              const moreResultsButton = await this.page.$('button.HlvSq, button[jsaction*="moreResults"]');
+              if (moreResultsButton) {
+                console.log("Found 'More results' button, clicking it");
+                await moreResultsButton.click();
+                await this.page.waitForTimeout(3000);
+                consecutiveFailedAttempts = 0;
+              }
+            } catch (err) {
+              // Ignore errors from "More results" button
+            }
+          }
+          
+          // If we're still not finding new results and have many attempts, take longer pauses
+          if (consecutiveFailedAttempts > 5) {
+            await this.page.waitForTimeout(3000); // Longer pause to let content load
+          }
         }
         
-        // More aggressive scrolling by simulating multiple small scrolls
-        await this.performImprovedScroll();
+        // Use significantly improved scrolling technique
+        await this.performEnhancedScrolling();
         
-        // Wait less time between scrolls for better performance
-        await this.page.waitForTimeout(1000);
+        // Wait between scrolls - variable timeout depending on scroll attempt
+        const scrollWaitTime = Math.min(1000 + (scrollAttempts * 50), 3000);
+        await this.page.waitForTimeout(scrollWaitTime);
       }
       
       console.log(`Finished gathering URLs. Found ${businessUrls.length} businesses`);
+      
+      // Final attempt to find any missed businesses
+      if (businessUrls.length < this.maxResults) {
+        await this.finalUrlSweep(businessUrls);
+      }
+      
       return businessUrls.slice(0, this.maxResults);
     } catch (error) {
       console.error('Error gathering business URLs:', error);
@@ -187,6 +233,87 @@ class GoogleMapsScraper {
         setTimeout(() => { feed.scrollTop += height / 3; }, 200);
       }
     });
+  }
+
+  // New enhanced scrolling technique
+  async performEnhancedScrolling() {
+    await this.page.evaluate(() => {
+      return new Promise((resolve) => {
+        // Identify the scrollable container
+        const scrollableContainers = [
+          document.querySelector('div[role="feed"]'),
+          document.querySelector('.m6QErb[aria-label]'),
+          document.querySelector('.m6QErb'),
+          document.querySelector('.section-scrollbox')
+        ].filter(Boolean);
+        
+        const scrollContainer = scrollableContainers[0] || document.documentElement;
+        
+        // Get total height
+        const totalHeight = scrollContainer.scrollHeight;
+        
+        // Perform multiple small scrolls with animation for better loading
+        let scrollPosition = scrollContainer.scrollTop;
+        const targetPosition = scrollPosition + 1000; // Scroll down by 1000px
+        
+        // Animated scroll for smoother loading
+        const scrollStep = 200; // px per step
+        const scrollInterval = setInterval(() => {
+          scrollPosition = Math.min(scrollPosition + scrollStep, targetPosition);
+          scrollContainer.scrollTop = scrollPosition;
+          
+          // Stop when we reach target or bottom
+          if (scrollPosition >= targetPosition || scrollPosition >= totalHeight - scrollContainer.clientHeight) {
+            clearInterval(scrollInterval);
+            resolve();
+          }
+        }, 100);
+        
+        // Safety timeout
+        setTimeout(() => {
+          clearInterval(scrollInterval);
+          resolve();
+        }, 2000);
+      });
+    });
+  }
+
+  // New method for final URL collection sweep
+  async finalUrlSweep(existingUrls) {
+    console.log("Performing final URL collection sweep...");
+    
+    try {
+      // Try alternate selectors to find any missed businesses
+      const finalBusinessElements = await this.page.$$(
+        '[jsaction*="mouseover:pane.hoverable"] a, ' +
+        'a.hfpxzc, div.Nv2PK a, .xvfwg a, ' +
+        '[data-result-index] a, div.V0h1Ob-haAclf a'
+      );
+      
+      console.log(`Final sweep found ${finalBusinessElements.length} potential elements`);
+      
+      for (const element of finalBusinessElements) {
+        try {
+          const href = await element.getAttribute('href');
+          if (href && href.includes('/maps/place/') && !existingUrls.includes(href)) {
+            // Clean URL
+            const cleanedHref = href.replace(/authuser=\d+&hl=[^&]+/, 'hl=en');
+            existingUrls.push(cleanedHref);
+            
+            if (existingUrls.length >= this.maxResults) {
+              console.log(`Reached maximum of ${this.maxResults} businesses in final sweep`);
+              break;
+            }
+          }
+        } catch (error) {
+          // Ignore individual element errors
+        }
+      }
+      
+      console.log(`After final sweep, collected ${existingUrls.length} URLs`);
+    } catch (error) {
+      console.error("Error during final URL sweep:", error);
+    }
   }
 
   // ...rest of existing methods are kept but will not be used in parallel mode...

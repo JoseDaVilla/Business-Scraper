@@ -5,6 +5,7 @@ const ParallelScraper = require('./scraper/parallelScraper');
 const ExcelExporter = require('./export/excelExporter');
 const EmailFinder = require('./scraper/emailFinder');
 const db = require('./config/database');
+const BatchScraper = require('./scraper/batchScraper');
 
 // Initialize express app
 const app = express();
@@ -15,6 +16,7 @@ const MAX_RESULTS_PER_SEARCH = 200;
 const scraper = new ParallelScraper(undefined, MAX_RESULTS_PER_SEARCH);
 const exporter = new ExcelExporter();
 const emailFinder = new EmailFinder();
+const batchScraper = new BatchScraper();
 
 // Initialize email finder
 let emailFinderRunning = false;
@@ -175,6 +177,101 @@ app.get('/api/find-emails/status', (req, res) => {
     queue: emailFinder.queue?.length || 0,
     activeTasks: emailFinder.runningTasks || 0
   });
+});
+
+// Add batch scraper endpoints
+app.post('/api/batch/start', async (req, res) => {
+  try {
+    const { states } = req.body;
+    
+    if (batchScraper.isRunning) {
+      return res.status(409).json({ 
+        error: 'A batch operation is already running' 
+      });
+    }
+    
+    const result = await batchScraper.startBatch(states);
+    res.json(result);
+  } catch (error) {
+    console.error('Error starting batch operation:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/batch/status', (req, res) => {
+  try {
+    const status = batchScraper.getStatus();
+    res.json(status);
+  } catch (error) {
+    console.error('Error getting batch status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/batch/stop', async (req, res) => {
+  try {
+    const result = await batchScraper.stop();
+    res.json(result);
+  } catch (error) {
+    console.error('Error stopping batch operation:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add new export endpoints
+app.get('/api/export-all', async (req, res) => {
+  try {
+    const exportResult = await exporter.exportAllBusinesses();
+    
+    res.json({
+      downloadUrl: `/exports/${exportResult.filename}`,
+      count: exportResult.count
+    });
+  } catch (error) {
+    console.error('Error exporting all businesses:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/export-state/:state', async (req, res) => {
+  try {
+    const { state } = req.params;
+    const exportResult = await exporter.exportBusinessesByState(state);
+    
+    res.json({
+      downloadUrl: `/exports/${exportResult.filename}`,
+      count: exportResult.count
+    });
+  } catch (error) {
+    console.error('Error exporting state businesses:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/stats', async (req, res) => {
+  try {
+    // Get statistics about the database
+    const businessCount = await db.getOne('SELECT COUNT(*) as count FROM businesses');
+    const emailCount = await db.getOne('SELECT COUNT(*) as count FROM businesses WHERE email IS NOT NULL AND email != \'\'');
+    const websiteCount = await db.getOne('SELECT COUNT(*) as count FROM businesses WHERE website IS NOT NULL AND website != \'\'');
+    const searchTerms = await db.getMany('SELECT DISTINCT search_term FROM businesses');
+    const states = await db.getMany(`
+      SELECT DISTINCT substring(search_term from '.+- (.+)$') as state 
+      FROM businesses 
+      WHERE search_term LIKE '%-%'
+    `);
+    
+    res.json({
+      totalBusinesses: parseInt(businessCount.count),
+      totalEmails: parseInt(emailCount.count),
+      totalWebsites: parseInt(websiteCount.count),
+      totalSearchTerms: searchTerms.length,
+      states: states.map(row => row.state).filter(Boolean)
+    });
+  } catch (error) {
+    console.error('Error getting statistics:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Improved server start function with port fallback
